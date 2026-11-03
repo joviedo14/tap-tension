@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tap Tension</title>
+<meta name="description" content="Measure tennis string bed tension by tapping the strings.">
+<meta name="theme-color" content="#1F5FBF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one phone column; racquet strip, big readout, then log and setup cards stacked. */
+:root {
+  --bg: #EEF1F4; --surface: #FFFFFF; --ink: #15202B; --muted: #5A6878; --line: #D6DDE5;
+  --accent: #1F5FBF; --accent-ink: #FFFFFF; --accent-soft: #DCE7F8;
+  --ball: #B9CC1F; --good: #2C7A4B; --warn: #A86A12; --bad: #B8441F;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0D1319; --surface: #16202A; --ink: #E7EDF3; --muted: #94A3B3; --line: #273440;
+    --accent: #6EA0F0; --accent-ink: #0D1319; --accent-soft: #1C2D45;
+    --ball: #D3E64A; --good: #5CC08A; --warn: #E0A548; --bad: #F08A63; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+body { padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.wrap { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+header { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 26px; letter-spacing: 0.02em; margin: 0; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; color: var(--muted); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ghost { background: none; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; color: var(--ink); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.rail { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.job { font-size: 14px; color: var(--muted); }
+.job b { color: var(--ink); font-weight: 600; }
+
+.readout { text-align: center; padding: 22px 16px 18px; }
+.big { font-family: var(--display); font-weight: 600; font-size: 92px; line-height: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.big small { font-size: 30px; color: var(--muted); margin-left: 4px; }
+.sub { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+.sub b { color: var(--ink); font-weight: 600; }
+.status { font-size: 15px; min-height: 22px; }
+.status.ok { color: var(--good); } .status.warn { color: var(--warn); } .status.bad { color: var(--bad); }
+.meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--ball); transition: width 60ms linear; }
+.taps { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 30px; }
+.tap { font-variant-numeric: tabular-nums; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; }
+.tap.off { opacity: 0.45; text-decoration: line-through; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1 1 140px; }
+.primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 14px 16px; font-weight: 600; font-size: 17px; }
+.primary.live { background: var(--ink); color: var(--bg); }
+.secondary { background: var(--accent-soft); color: var(--ink); border: 0; border-radius: 12px; padding: 14px 16px; font-weight: 600; }
+.secondary:disabled, .primary:disabled { opacity: 0.45; cursor: default; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--ball); margin-right: 8px; vertical-align: 1px; }
+@media (prefers-reduced-motion: no-preference) { .live .dot { animation: pulse 1.1s ease-in-out infinite; } }
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+.field { display: grid; gap: 4px; font-size: 14px; color: var(--muted); min-width: 0; }
+.field input, .field select { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; color: var(--ink); width: 100%; font-size: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+
+.chart { width: 100%; height: auto; display: block; }
+.log { display: grid; }
+.logrow { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; align-items: baseline; }
+.logrow:first-child { border-top: 0; }
+.logrow .d { font-size: 14px; color: var(--muted); }
+.logrow .d span { color: var(--ink); display: block; font-size: 15px; }
+.lb { font-family: var(--display); font-size: 22px; font-weight: 600; }
+.pill { font-size: 13px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); } .pill.base { color: var(--muted); }
+.empty { color: var(--muted); font-size: 15px; }
+.x { background: none; border: 0; color: var(--muted); padding: 0 0 0 6px; font-size: 18px; }
+details summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details summary::-webkit-details-marker { display: none; }
+details summary::after { content: "+"; font-size: 22px; color: var(--muted); }
+details[open] summary::after { content: "–"; }
+.how ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.note { font-size: 13px; color: var(--muted); }
+.danger { color: var(--bad); border-color: var(--bad); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; z-index: 5; max-width: calc(100% - 32px); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tap Tension</h1>
+    <button class="ghost" id="exportBtn" type="button">Copy log</button>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Racquets"></nav>
+  <div class="job" id="jobLine"></div>
+
+  <section class="card readout" aria-live="polite">
+    <div class="big" id="bigLb">--<small>lb</small></div>
+    <div class="sub">
+      <span><b id="hz">--</b> Hz</span>
+      <span><b id="nTaps">0</b> <span id="tapWord">taps</span></span>
+      <span>spread <b id="spread">--</b></span>
+      <span>vs ref <b id="pctRef">--</b></span>
+    </div>
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <div class="status" id="status">Tap Start, then tap the center of the strings 5 or 6 times.</div>
+    <div class="taps" id="taps"></div>
+    <div class="row">
+      <button class="primary" id="listenBtn" type="button">Start listening</button>
+      <button class="secondary" id="clearBtn" type="button">Clear taps</button>
+    </div>
+    <div class="row">
+      <label class="field" for="noteIn">Note (optional)
+        <input id="noteIn" type="text" placeholder="e.g. after 3 sessions" maxlength="60">
+      </label>
+    </div>
+    <button class="secondary" id="saveBtn" type="button" disabled>Save reading</button>
+  </section>
+
+  <section class="card">
+    <h2>This string job</h2>
+    <svg class="chart" id="chart" viewBox="0 0 340 150" role="img" aria-label="Tension readings over time"></svg>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="card">
+    <details id="setupBox">
+      <summary>Racquet and strings</summary>
+      <div style="display:grid;gap:12px;margin-top:12px">
+        <div class="grid3">
+          <label class="field" for="fName">Racquet<input id="fName" type="text" maxlength="40"></label>
+          <label class="field" for="fHead">Head size (sq in)<input id="fHead" type="number" inputmode="decimal" min="80" max="135" step="1"></label>
+        </div>
+        <div class="grid3">
+          <label class="field" for="fMType">Mains string<select id="fMType"></select></label>
+          <label class="field" for="fMGauge">Gauge (mm)<input id="fMGauge" type="number" inputmode="decimal" min="1.0" max="1.5" step="0.01"></label>
+        </div>
+        <div class="grid3">
+          <label class="field" for="fCType">Crosses string<select id="fCType"></select></label>
+          <label class="field" for="fCGauge">Gauge (mm)<input id="fCGauge" type="number" inputmode="decimal" min="1.0" max="1.5" step="0.01"></label>
+        </div>
+        <div class="grid2">
+          <label class="field" for="fRefM">Strung at, mains (lb)<input id="fRefM" type="number" inputmode="decimal" min="20" max="80" step="0.5"></label>
+          <label class="field" for="fRefC">Crosses (lb)<input id="fRefC" type="number" inputmode="decimal" min="20" max="80" step="0.5"></label>
+        </div>
+        <div class="grid2">
+          <label class="field" for="fLabel">String names<input id="fLabel" type="text" maxlength="50" placeholder="e.g. Wasabi / Syn Gut"></label>
+          <label class="field" for="fDate">Strung on<input id="fDate" type="date"></label>
+        </div>
+        <label class="field" for="fFactor">String factor (leave at 1.00 unless calibrating)
+          <input id="fFactor" type="number" inputmode="decimal" min="0.5" max="2" step="0.01">
+        </label>
+        <p class="note">Changes here update the current string job. Restrung? Use New string job so the old readings stay with the old setup.</p>
+        <div class="row">
+          <button class="secondary" id="newJobBtn" type="button">New string job</button>
+          <button class="ghost" id="addRacquetBtn" type="button">Add racquet</button>
+        </div>
+        <button class="ghost danger" id="delRacquetBtn" type="button">Delete this racquet</button>
+      </div>
+    </details>
+  </section>
+
+  <section class="card how">
+    <details>
+      <summary>How to get clean readings</summary>
+      <ol style="margin-top:12px">
+        <li>Quiet room. Hold the racquet by the handle so the head hangs free, strings facing you.</li>
+        <li>Hold the phone 5 to 15 cm from the strings, mic end toward them.</li>
+        <li>Tap the center of the string bed sharply with something hard and round, like a pen or screwdriver handle. Not your finger, not a ball.</li>
+        <li>Tap 5 or 6 times, a second apart. A spread under 3% means the taps agree.</li>
+        <li>Measure right after stringing for your baseline, then every few sessions.</li>
+      </ol>
+      <p class="note" style="margin-top:10px">The reading is the string bed's average tension. It will usually sit 10 to 20% below what the machine was set to; that is normal. Track the drop from your first reading. Around 10 to 20% below that baseline is the restring zone.</p>
+    </details>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="dsp.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
