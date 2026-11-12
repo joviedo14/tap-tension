@@ -13,7 +13,9 @@
     multi: { label: "Multifilament", density: 1.15 },
     poly: { label: "Poly / co-poly", density: 1.38 },
     gut: { label: "Natural gut", density: 1.3 },
-    kevlar: { label: "Kevlar / aramid", density: 1.44 }
+    kevlar: { label: "Kevlar / aramid", density: 1.44 },
+    // Specific strings: picking one also fills in its gauge
+    smashOrange: { label: "Kirschbaum Super Smash Orange 1.23", density: 1.38, gauge: 1.23 }
   };
 
   // Linear density in kg/m from material density (g/cm^3) and gauge (mm)

@@ -23,7 +23,7 @@
       current: "speed",
       racquets: [
         { id: "speed", name: "Head Speed Pro", head: 100, jobs: [job({ date: "2026-10-12", label: "Kirschbaum Syn Gut", mt: "synthetic", mg: 1.30, ct: "synthetic", cg: 1.30, rm: 50, rc: 48 })] },
-        { id: "blackout", name: "Solinco Blackout", head: 100, jobs: [job({ date: "2026-10-01", label: "Kirschbaum Syn Gut", mt: "synthetic", mg: 1.30, ct: "synthetic", cg: 1.30, rm: 53, rc: 50 })] },
+        { id: "blackout", name: "Solinco Blackout", head: 100, jobs: [job({ date: "2026-11-11", label: "Kirschbaum Super Smash Orange", mt: "smashOrange", mg: 1.23, ct: "smashOrange", cg: 1.23, rm: 50, rc: 47 })] },
         { id: "prince", name: "Prince Tour 100", head: 100, jobs: [job({ date: "2026-09-30", label: "Kirschbaum Syn Gut", mt: "synthetic", mg: 1.30, ct: "synthetic", cg: 1.30, rm: 53, rc: 50 })] },
         { id: "boom", name: "Dad's Boom MP", head: 100, jobs: [job({ date: "2026-10-22", label: "Isospeed Spin", mt: "poly", mg: 1.25, ct: "poly", cg: 1.25, rm: 50, rc: 50 })] }
       ]
@@ -166,6 +166,11 @@
     }
     ["fName","fHead","fMType","fMGauge","fCType","fCGauge","fRefM","fRefC","fLabel","fDate","fFactor"].forEach(function (id) {
       $(id).addEventListener("change", function () {
+        // A specific string sets its own gauge
+        if (id === "fMType" || id === "fCType") {
+          var m = D.MATERIALS[$(id).value];
+          if (m && m.gauge) $(id === "fMType" ? "fMGauge" : "fCGauge").value = m.gauge;
+        }
         var r = racquet(), j = curJob();
         r.name = $("fName").value.trim() || r.name;
         r.head = num("fHead", 80, 135, r.head);
