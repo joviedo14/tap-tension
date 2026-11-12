@@ -33,6 +33,14 @@
   var state;
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
   if (!state || !state.racquets || !state.racquets.length) state = seed();
+  if (!state.strings) state.strings = [];
+  // Built-in material types (no fixed gauge) are what a new string can be based on
+  var BASE_KEYS = Object.keys(D.MATERIALS).filter(function (k) { return !D.MATERIALS[k].gauge; });
+  function registerString(st) {
+    var b = D.MATERIALS[st.base] || D.MATERIALS.synthetic;
+    D.MATERIALS[st.id] = { label: st.name + " " + Number(st.gauge).toFixed(2), density: b.density, gauge: st.gauge, custom: true };
+  }
+  state.strings.forEach(registerString);
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast("Couldn't save on this device"); } }
 
   function racquet() {
@@ -142,11 +150,44 @@
     svg.innerHTML = s;
   }
 
-  var MAT_KEYS = Object.keys(D.MATERIALS);
-  function fillSelect(sel) {
-    sel.innerHTML = MAT_KEYS.map(function (k) { return '<option value="' + k + '">' + D.MATERIALS[k].label + "</option>"; }).join("");
+  function fillSelect(sel, keys) {
+    keys = keys || Object.keys(D.MATERIALS);
+    sel.innerHTML = keys.map(function (k) { return '<option value="' + k + '">' + esc(D.MATERIALS[k].label) + "</option>"; }).join("");
   }
-  fillSelect($("fMType")); fillSelect($("fCType"));
+  function fillStringSelects() { fillSelect($("fMType")); fillSelect($("fCType")); }
+  fillStringSelects(); fillSelect($("sBase"), BASE_KEYS); $("sBase").value = "poly";
+
+  function stringInUse(id) {
+    return state.racquets.some(function (r) {
+      return r.jobs.some(function (j) { return j.mains.type === id || j.crosses.type === id; });
+    });
+  }
+  function renderStrings() {
+    var el = $("stringList");
+    if (!state.strings.length) { el.textContent = "No strings added yet. Added strings show up in the Mains and Crosses lists and fill in their gauge."; return; }
+    el.innerHTML = state.strings.map(function (st) {
+      return '<div class="row" style="align-items:center"><span>' + esc(st.name) + " " + Number(st.gauge).toFixed(2) + " (" + esc(D.MATERIALS[st.base].label) + ')</span>' +
+        '<button class="ghost danger" type="button" style="flex:0 0 auto" data-id="' + st.id + '">Remove</button></div>';
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("button"), function (b) {
+      b.onclick = function () {
+        var id = b.dataset.id;
+        if (stringInUse(id)) { toast("That string is used on a string job, so it stays"); return; }
+        state.strings = state.strings.filter(function (x) { return x.id !== id; });
+        delete D.MATERIALS[id]; save(); fillStringSelects(); renderSetup(); renderStrings();
+      };
+    });
+  }
+  $("addStringBtn").onclick = function () {
+    var name = $("sName").value.trim(), g = parseFloat($("sGauge").value), base = $("sBase").value;
+    if (!name) { toast("Enter the string's name"); $("sName").focus(); return; }
+    if (!isFinite(g) || g < 1.0 || g > 1.5) { toast("Enter a gauge between 1.00 and 1.50 mm"); $("sGauge").focus(); return; }
+    var st = { id: "s_" + uid(), name: name, base: base, gauge: Math.round(g * 100) / 100 };
+    state.strings.push(st); registerString(st); save();
+    fillStringSelects(); renderSetup(); renderStrings();
+    $("sName").value = ""; $("sGauge").value = "";
+    toast(name + " added. Pick it under Mains or Crosses.");
+  };
 
   function renderSetup() {
     var r = racquet(), j = curJob();
@@ -349,7 +390,7 @@
     } else toast("Copy isn't available in this browser");
   };
 
-  function renderAll() { renderRail(); renderJob(); renderSetup(); renderLog(); renderChart(); recalcTaps(); setStatus("Tap Start, then tap the center of the strings 5 or 6 times.", ""); }
+  function renderAll() { renderStrings(); renderRail(); renderJob(); renderSetup(); renderLog(); renderChart(); recalcTaps(); setStatus("Tap Start, then tap the center of the strings 5 or 6 times.", ""); }
   bindSetup();
   renderAll();
 

@@ -149,6 +149,18 @@ details[open] summary::after { content: "–"; }
           <label class="field" for="fCType">Crosses string<select id="fCType"></select></label>
           <label class="field" for="fCGauge">Gauge (mm)<input id="fCGauge" type="number" inputmode="decimal" min="1.0" max="1.5" step="0.01"></label>
         </div>
+        <details id="stringsBox">
+          <summary class="note">My strings (add a string to the list)</summary>
+          <div style="display:grid;gap:10px;margin-top:10px">
+            <div id="stringList" class="note"></div>
+            <label class="field" for="sName">String name<input id="sName" type="text" maxlength="40" placeholder="e.g. Toroline Wasabi"></label>
+            <div class="grid3">
+              <label class="field" for="sBase">Type<select id="sBase"></select></label>
+              <label class="field" for="sGauge">Gauge (mm)<input id="sGauge" type="number" inputmode="decimal" min="1.0" max="1.5" step="0.01" placeholder="1.25"></label>
+            </div>
+            <button class="ghost" id="addStringBtn" type="button">Add string</button>
+          </div>
+        </details>
         <div class="grid2">
           <label class="field" for="fRefM">Strung at, mains (lb)<input id="fRefM" type="number" inputmode="decimal" min="20" max="80" step="0.5"></label>
           <label class="field" for="fRefC">Crosses (lb)<input id="fRefC" type="number" inputmode="decimal" min="20" max="80" step="0.5"></label>
